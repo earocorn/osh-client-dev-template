@@ -3,8 +3,9 @@ import VideoView from "./osh-js/source/core/ui/view/video/VideoView";
 import VideoDataLayer from "./osh-js/source/core/ui/layer/VideoDataLayer";
 import DataSynchronizer from "./osh-js/source/core/timesync/DataSynchronizer";
 import { Mode } from "./osh-js/source/core/datasource/Mode";
+import DataSink from "osh-js/source/core/datapush/DataSink";
 
-let server = "localhost:8181/sensorhub/sos";
+let server = "localhost:8181/sensorhub/";
 let start = "2023-11-02T02:47:38.788Z";
 console.log(start);
 let end = "2023-11-22T02:38:44.414558300Z";
@@ -14,7 +15,7 @@ let videoProperty = "http://sensorml.com/ont/swe/property/VideoFrame";
 let dataSources = [];
 
 let videoDataSource = new SosGetResult("PiCamera Video", {
-    endpointUrl: server,
+    endpointUrl: server + "sos",
     offeringID: offeringId,
     startTime: start,
     endTime: end,
@@ -52,3 +53,9 @@ let masterTimeController = new DataSynchronizer({
   });
 
 masterTimeController.connect();
+
+let sampleTask = new DataSink({
+    protocol: "http",
+    endpointUrl: server + "sps",
+});
+
