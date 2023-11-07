@@ -2,8 +2,8 @@ import SosGetResult from "./osh-js/source/core/datasource/sos/SosGetResult.datas
 import VideoView from "./osh-js/source/core/ui/view/video/VideoView";
 import VideoDataLayer from "./osh-js/source/core/ui/layer/VideoDataLayer";
 import DataSynchronizer from "./osh-js/source/core/timesync/DataSynchronizer";
+import SampleTasking from "./SampleTasking";
 import { Mode } from "./osh-js/source/core/datasource/Mode";
-import DataSink from "osh-js/source/core/datapush/DataSink";
 
 let server = "localhost:8181/sensorhub/";
 let start = "2023-11-02T02:47:38.788Z";
@@ -54,8 +54,19 @@ let masterTimeController = new DataSynchronizer({
 
 masterTimeController.connect();
 
-let sampleTask = new DataSink({
-    protocol: "http",
-    endpointUrl: server + "sps",
-});
+// let sampleTask = new SampleTasking("sampletasking", {
+//     //protocol: "http",
+//     service: "SPS",
+//     version: "2.0",
+//     endpointUrl: server + "sps",
+//     procedure: "urn:osh:sensor:simulatedsensor001"
+// });
 
+//     let sampleTextInput = document.getElementById("sampletextinput").value
+//     let sampleBooleanInput = document.getElementById("samplebooleaninput").value
+//     console.log(sampleTextInput + " and " + sampleBooleanInput);
+//     let cmdData = sampleTask.getCommandData({
+//         SampleText: sampleTextInput,
+//         SampleBoolean: sampleBooleanInput,
+//     });
+//     sampleTask.sendRequest(cmdData);

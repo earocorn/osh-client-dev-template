@@ -18,7 +18,7 @@ module.exports = {
     entry: path.resolve(__dirname,'main.js'),
     // Tell Weback to output our bundle to ./dist/bundle.js
     output: {
-        filename: 'bundle.geoint.demo.js',
+        //filename: 'bundle.geoint.demo.js',
         path: path.resolve(__dirname, 'dist'),
         // Needed to compile multiline strings in Cesium
         sourcePrefix: ''
