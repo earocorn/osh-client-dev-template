@@ -3,7 +3,7 @@ import VideoView from "./osh-js/source/core/ui/view/video/VideoView";
 import VideoDataLayer from "./osh-js/source/core/ui/layer/VideoDataLayer";
 import DataSynchronizer from "./osh-js/source/core/timesync/DataSynchronizer";
 import { Mode } from "./osh-js/source/core/datasource/Mode";
-import SampleTasking from "./osh-js/source/core/datapush/SampleTasking";
+import SampleTasking from "./SampleTasking";
 
 let server = "localhost:8181/sensorhub/";
 let start = "2023-11-02T02:47:38.788Z";
