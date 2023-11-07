@@ -3,9 +3,8 @@ import VideoView from "./osh-js/source/core/ui/view/video/VideoView";
 import VideoDataLayer from "./osh-js/source/core/ui/layer/VideoDataLayer";
 import DataSynchronizer from "./osh-js/source/core/timesync/DataSynchronizer";
 import { Mode } from "./osh-js/source/core/datasource/Mode";
-import SampleTasking from "./osh-js/source/core/datapush/SampleTasking";
 
-let server = "localhost:8181/sensorhub/";
+let server = "localhost:8181/sensorhub/sos";
 let start = "2023-11-02T02:47:38.788Z";
 console.log(start);
 let end = "2023-11-22T02:38:44.414558300Z";
@@ -15,7 +14,7 @@ let videoProperty = "http://sensorml.com/ont/swe/property/VideoFrame";
 let dataSources = [];
 
 let videoDataSource = new SosGetResult("PiCamera Video", {
-    endpointUrl: server + "sos",
+    endpointUrl: server,
     offeringID: offeringId,
     startTime: start,
     endTime: end,
@@ -53,26 +52,3 @@ let masterTimeController = new DataSynchronizer({
   });
 
 masterTimeController.connect();
-
-let sampleTask = new SampleTasking("New Simulated Sensor Driver", {
-    protocol: "http",
-    service: "SPS",
-    version: "2.0",
-    endpointUrl: server + "sps",
-    procedure: "urn:osh:sensor:simulatedsensor001",
-});
-
-function submitCommand() {
-    let sampleTextInput = document.getElementById("sampletextinput").value;
-    let sampleBooleanInput = document.getElementById("samplebooleaninput").checked;
-    console.log(sampleTextInput + " and " + sampleBooleanInput);
-    let cmdData = sampleTask.getCommandData({
-        SampleBoolean: sampleBooleanInput,
-        SampleText: sampleTextInput,
-    })
-    sampleTask.sendRequest(cmdData);
-}
-
-document.getElementById("submitbutton").addEventListener("click", () => submitCommand());
-
-console.log("testing hello")
