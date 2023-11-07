@@ -64,10 +64,18 @@
     <body>
         <div id="container">
             <div id="left">
-                <div class="title">PiCamera Video Stream</div>
+                <h2 class="title">PiCamera Video Stream</h2>
                 <div id="vid">
                     <div class='video-window' id='video-window'></div>
                 </div>
+            </div>
+            <div id="right">
+                <h2>Control</h2>
+                <label for="sampletextinput">SampleText to send command</label>
+                <input type="text" placeholder="type text here..." id="sampletextinput">
+                <label for="samplebooleaninput">SampleBoolean to send command</label>
+                <input type="checkbox" id="samplebooleaninput">
+                <button id="submitbutton">Send Command</button>
             </div>
         </div>
     </body>
