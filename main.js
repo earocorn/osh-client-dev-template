@@ -13,7 +13,6 @@ let offeringId = "urn:osh:sensor:picamerapicamera001";
 let videoProperty = "http://sensorml.com/ont/swe/property/VideoFrame";
 
 const systemId = "2grqc1vpb8g7i";
-const cmdStreamId = "3mppcee7rmn7a";
 
 let dataSources = [];
 
@@ -25,7 +24,6 @@ const systems = new Systems({
         password: 'admin',
     }
 });
-
 
 let videoDataSource = new SosGetResult("PiCamera Video", {
     endpointUrl: server + "sos",
@@ -67,11 +65,23 @@ let masterTimeController = new DataSynchronizer({
 
 masterTimeController.connect();
 
+async function fetchControlId(index) {
+    const fetchedControls = (await fetch("http://" + server + "api/controls")).json();
+    const controls = await fetchedControls;
+    const controlId = controls.items[index].id;
+
+    return controlId;
+}
+
 async function submitCommand() {
+    // get primary control id
+    const cmdStreamId = await fetchControlId(0);
+    console.info(`fetchedControl = ${JSON.stringify(cmdStreamId)}`);
+
     console.info('retrieving system')
     const system = await systems.getSystemById(systemId);
     console.info(`system retrieved : ${JSON.stringify(system)}\nretrieving control`);
-    const control = await system.getControlById(document.getElementById("cmdstreamid").value);
+    const control = await system.getControlById(cmdStreamId);
     console.info(`control received : ${control.toString()}`);
 
     let sampleTextInput = document.getElementById("sampletextinput").value;
