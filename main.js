@@ -3,7 +3,7 @@ import VideoView from "./osh-js/source/core/ui/view/video/VideoView";
 import VideoDataLayer from "./osh-js/source/core/ui/layer/VideoDataLayer";
 import DataSynchronizer from "./osh-js/source/core/timesync/DataSynchronizer";
 import { Mode } from "./osh-js/source/core/datasource/Mode";
-import SampleTasking from "./SampleTasking";
+import Systems from "./osh-js/source/core/sweapi/system/Systems";
 
 let server = "localhost:8181/sensorhub/";
 let start = "2023-11-02T02:47:38.788Z";
@@ -12,7 +12,20 @@ let end = "2023-11-22T02:38:44.414558300Z";
 let offeringId = "urn:osh:sensor:picamerapicamera001";
 let videoProperty = "http://sensorml.com/ont/swe/property/VideoFrame";
 
+const systemId = "2grqc1vpb8g7i";
+const cmdStreamId = "3mppcee7rmn7a";
+
 let dataSources = [];
+
+const systems = new Systems({
+    endpointUrl: server + 'api',
+    tls: false,
+    connectorOpts: {
+        username: 'admin',
+        password: 'admin',
+    }
+});
+
 
 let videoDataSource = new SosGetResult("PiCamera Video", {
     endpointUrl: server + "sos",
@@ -54,23 +67,24 @@ let masterTimeController = new DataSynchronizer({
 
 masterTimeController.connect();
 
-let sampleTask = new SampleTasking("New Simulated Sensor Driver", {
-    protocol: "http",
-    service: "SPS",
-    version: "2.0",
-    endpointUrl: server + "sps",
-    procedure: "urn:osh:sensor:simulatedsensor001",
-});
+async function submitCommand() {
+    console.info('retrieving system')
+    const system = await systems.getSystemById(systemId);
+    console.info(`system retrieved : ${JSON.stringify(system)}\nretrieving control`);
+    const control = await system.getControlById(document.getElementById("cmdstreamid").value);
+    console.info(`control received : ${control.toString()}`);
 
-function submitCommand() {
     let sampleTextInput = document.getElementById("sampletextinput").value;
     let sampleBooleanInput = document.getElementById("samplebooleaninput").checked;
     console.log(sampleTextInput + " and " + sampleBooleanInput);
-    let cmdData = sampleTask.getCommandData({
-        SampleBoolean: sampleBooleanInput,
-        SampleText: sampleTextInput,
-    })
-    sampleTask.sendRequest(cmdData);
+    let cmdData = {
+        params: {
+            SampleBoolean: sampleBooleanInput,
+            SampleText: sampleTextInput,
+        }
+    };
+    console.log(cmdData);
+    control.postCommand(JSON.stringify(cmdData));
 }
 
 document.getElementById("submitbutton").addEventListener("click", () => submitCommand());

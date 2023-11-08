@@ -22,25 +22,17 @@ class SampleTasking extends DataSink {
 
     // }
     getCommandData(values) {
-        let cmdData = '<sps:DataRecord>';
-        //let cmdData = "";
+        let cmdData = "";
 
         if(values.SampleBoolean !== null) {
-            cmdData += '<swe:field name="SampleBoolean"><swe:Boolean>';
-            cmdData += '<swe:value>' + values.SampleBoolean + '</swe:value>';
-            cmdData += '</swe:Boolean></swe:field>';
+            cmdData += `"SampleBoolean":` + values.SampleBoolean + `,`;
         }
 
         if(values.SampleText !== null) {
-            cmdData += '<swe:field name="SampleText"><swe:Text>';
-            cmdData += '<swe:value>' + values.SampleText + '</swe:value>';
-            cmdData += '</swe:Text></swe:field>';
+            cmdData += `"SampleText":"` + values.SampleText + `"`;
         }
 
-        cmdData += '</sps:DataRecord>';
-
         return cmdData;
-
     }
 
     buildUrl(properties) {
@@ -52,45 +44,28 @@ class SampleTasking extends DataSink {
         // adds endpoint url
         url += properties.endpointUrl;
 
-        // add service parameter to url
-        url += "?service=" + properties.service;
+        // control
+        url += "/controls";
 
-        // add version parameter to url
-        url += "&version=" + properties.version;
+        // specific command stream id
+        url += "/" + properties.controlStreamId;
 
-        // add Submit request parameter
-        url += "&request=Submit";
-
-        // add procedere to url
-        url += "&procedure=" + properties.procedure;
+        // commands
+        url += "/commands/";
 
         return url;
     }
 
     buildRequest(cmdData) {
-        let xmlSpsRequest = "<sps:Submit ";
+        let reqBody = `{`;
 
-        // adds service
-        xmlSpsRequest += "service=\"" + this.properties.service + "\" ";
+        reqBody += `"params": {`;
 
-        // adds version
-        xmlSpsRequest += "version=\"" + this.properties.version + "\" ";
+        reqBody += cmdData;
 
-        // adds ns
-        xmlSpsRequest += "xmlns:sps=\"http://www.opengis.net/sps/2.0\" xmlns:sweapi=\"http://www.opengis.net/swe/2.0\"> ";
+        reqBody += `} }`
 
-        // adds procedure
-        xmlSpsRequest += "<sps:procedure>" + this.properties.procedure + "</sps:procedure>";
-
-        // adds taskingParameters
-        xmlSpsRequest += "<sps:taskingParameters name=\"" + this.name + "\">";
-
-        xmlSpsRequest += cmdData;
-
-        // adds endings
-        xmlSpsRequest += "</sps:taskingParameters></sps:Submit>";
-
-        return xmlSpsRequest;
+        return reqBody;
     }
 
     // buildRequest(cmdData) {

@@ -47,24 +47,21 @@ class DataSink {
 
     fetchRequest(properties) {
         const request = {
-            mode: 'no-cors',
             method: 'POST',
             headers: {
-                'Content-Type': 'application/xml',
-                'Access-Control-Allow-Origin': 'http://localhost:9000',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Credentials': 'true',
             },
-            body: this.buildRequest(properties),
+            body: JSON.stringify(this.buildRequest(properties)),
         };
 
         console.log(JSON.stringify(request));
 
         fetch(this.url, request)
         .then(response => {
-            if(!response.ok) {
-
-            }
-            return response.text();
+            return response.json();
         })
         .then(data => {
             this.onCatchSuccess(data);

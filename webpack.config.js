@@ -68,6 +68,12 @@ module.exports = {
         contentBase: path.join(__dirname, 'dist'),
         compress: true,
         port: 9000,
+        proxy: {
+            '/sensorhub/api' : {
+                target: 'http://localhost:8181', // setup proxy
+                changeOrigin: true,
+            }
+        },
         hot: true,
         index: 'index.html'
     },
