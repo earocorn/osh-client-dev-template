@@ -59,6 +59,15 @@
                 height:30%;
             }
 
+            input.angleinputnumber {
+                border-radius: 3px;
+            }
+
+            div.controlpad {
+                padding: 30px;
+                display: block;
+            }
+
         </style>
     </head>
     <body>
@@ -71,17 +80,18 @@
             </div>
             <div id="right">
                 <h2>Control</h2>
-                <div>
-                    <h3>Config</h3>
-                    <label for="cmdstreamid">Command Stream Id</label>
-                    <input type="text" id="cmdstreamid">
+                <label for="angleinput">Angle Input</label>
+                <span>
+                    <input type="number" class="angleinputnumber" id="angleinput" value="0">
+                    degrees
+                </span>
+                <button id="submitbutton">Set Angle</button>
+                <div class="controlpad">
+                    <button>UP</button>
+                    <button>DOWN</button>
                 </div>
-                <label for="sampletextinput">SampleText to send command</label>
-                <input type="text" placeholder="type text here..." id="sampletextinput">
-                <label for="samplebooleaninput">SampleBoolean to send command</label>
-                <input type="checkbox" id="samplebooleaninput">
-                <button id="submitbutton">Send Command</button>
             </div>
+            <button></button>
         </div>
     </body>
 </html>

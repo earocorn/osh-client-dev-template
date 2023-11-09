@@ -73,7 +73,7 @@ async function fetchControlId(index) {
     return controlId;
 }
 
-async function submitCommand() {
+async function submitCommand(angle) {
     // get primary control id
     const cmdStreamId = await fetchControlId(0);
     console.info(`fetchedControl = ${JSON.stringify(cmdStreamId)}`);
@@ -82,19 +82,22 @@ async function submitCommand() {
     const system = await systems.getSystemById(systemId);
     console.info(`system retrieved : ${JSON.stringify(system)}\nretrieving control`);
     const control = await system.getControlById(cmdStreamId);
-    console.info(`control received : ${control.toString()}`);
+    console.info(`control received`);
 
-    let sampleTextInput = document.getElementById("sampletextinput").value;
-    let sampleBooleanInput = document.getElementById("samplebooleaninput").checked;
-    console.log(sampleTextInput + " and " + sampleBooleanInput);
+    let angleInput = angle != null ? document.getElementById("angleinput").value : angle;
+
     let cmdData = {
         params: {
-            SampleBoolean: sampleBooleanInput,
-            SampleText: sampleTextInput,
+            Angle: angleInput,
         }
     };
-    console.log(cmdData);
-    control.postCommand(JSON.stringify(cmdData));
+    console.log(`Tilting by ${JSON.stringify(cmdData)} degrees`);
+    try {
+        control.postCommand(JSON.stringify(cmdData));
+    } catch (error) {
+        console.error(error);
+        alert(error);
+    }
 }
 
 document.getElementById("submitbutton").addEventListener("click", () => submitCommand());
