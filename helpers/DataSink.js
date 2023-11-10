@@ -15,7 +15,7 @@
  ******************************* END LICENSE BLOCK ***************************/
 
  
-import {randomUUID} from "./osh-js/source/core/utils/Utils";
+import {randomUUID} from "../osh-js/source/core/utils/Utils";
 
 /**
  * This class is in charge of send command to the server

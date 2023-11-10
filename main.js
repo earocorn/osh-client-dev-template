@@ -12,9 +12,36 @@ let end = "2023-11-22T02:38:44.414558300Z";
 let offeringId = "urn:osh:sensor:picamerapicamera001";
 let videoProperty = "http://sensorml.com/ont/swe/property/VideoFrame";
 
-const systemId = "2grqc1vpb8g7i";
+// update with static system id or use function to get system id at index 0
+let systemId = "";
+let cmdStreamId = "";
+var currentAngle = 90;
 
 let dataSources = [];
+
+async function fetchControlId(index) {
+    const fetchedControls = (await fetch("http://" + server + "api/controls")).json();
+    const controls = await fetchedControls;
+    const controlId = controls.items[index].id;
+
+    return controlId;
+}
+
+async function fetchSystemId(index) {
+    const fetchedSystems = (await fetch("http://" + server + "api/systems")).json();
+    const systems = await fetchedSystems;
+    const systemId = systems.items[index].id;
+
+    return systemId;
+}
+
+async function populateIds() {
+    systemId = await fetchSystemId(0);
+    cmdStreamId = await fetchControlId(0);
+    console.info(`Fetched ids! : system ID = ${systemId} and command ID = ${cmdStreamId}`);
+}
+
+populateIds();
 
 const systems = new Systems({
     endpointUrl: server + 'api',
@@ -65,18 +92,11 @@ let masterTimeController = new DataSynchronizer({
 
 masterTimeController.connect();
 
-async function fetchControlId(index) {
-    const fetchedControls = (await fetch("http://" + server + "api/controls")).json();
-    const controls = await fetchedControls;
-    const controlId = controls.items[index].id;
-
-    return controlId;
-}
-
 async function submitCommand(angle) {
-    // get primary control id
-    const cmdStreamId = await fetchControlId(0);
-    console.info(`fetchedControl = ${JSON.stringify(cmdStreamId)}`);
+    // populate ids if not already populated
+    if(cmdStreamId === "" || systemId === "") {
+        await populateIds();
+    }
 
     console.info('retrieving system')
     const system = await systems.getSystemById(systemId);
@@ -84,11 +104,11 @@ async function submitCommand(angle) {
     const control = await system.getControlById(cmdStreamId);
     console.info(`control received`);
 
-    let angleInput = angle != null ? document.getElementById("angleinput").value : angle;
+    currentAngle = angle != null ? document.getElementById("angleinput").value : angle;
 
     let cmdData = {
         params: {
-            Angle: angleInput,
+            Angle: currentAngle,
         }
     };
     console.log(`Tilting by ${JSON.stringify(cmdData)} degrees`);
@@ -100,6 +120,23 @@ async function submitCommand(angle) {
     }
 }
 
-document.getElementById("submitbutton").addEventListener("click", () => submitCommand());
+async function updateAngle(deltaAngle) {
+    const angleInput = document.getElementById("angleinput");
+    currentAngle = parseInt(angleInput.value)
+    deltaAngle = parseInt(deltaAngle);
 
-console.log("testing hello")
+    currentAngle += deltaAngle;
+    currentAngle = currentAngle > 120 ? Math.min(125, currentAngle) : Math.max(0, currentAngle);
+    angleInput.value = currentAngle;
+
+    await populateIds();
+
+    submitCommand(currentAngle);
+}
+
+submitCommand(currentAngle);
+
+document.getElementById("submitbutton").addEventListener("click", () => submitCommand());
+document.getElementById("upbutton").addEventListener("click", () => updateAngle(Number.parseInt(15)));
+document.getElementById("downbutton").addEventListener("click", () => updateAngle(Number.parseInt(-15)));
+document.getElementById("angleinput").value = currentAngle;
