@@ -4,6 +4,9 @@ import VideoDataLayer from "./osh-js/source/core/ui/layer/VideoDataLayer";
 import DataSynchronizer from "./osh-js/source/core/timesync/DataSynchronizer";
 import { Mode } from "./osh-js/source/core/datasource/Mode";
 import Systems from "./osh-js/source/core/sweapi/system/Systems";
+import SweApiFetch from "./osh-js/source/core/datasource/sweapi/SweApi.datasource.js"
+import PointMarkerLayer from "./osh-js/source/core/ui/layer/PointMarkerLayer.js"
+import LeafletView from "./osh-js/source/core/ui/view/map/LeafletView.js"
 
 let server = "localhost:8181/sensorhub/";
 let start = "2023-11-02T02:47:38.788Z";
@@ -15,33 +18,31 @@ let videoProperty = "http://sensorml.com/ont/swe/property/VideoFrame";
 // update with static system id or use function to get system id at index 0
 let systemId = "";
 let cmdStreamId = "";
+let dataStreamId = "";
 var currentAngle = 90;
 
 let dataSources = [];
 
-async function fetchControlId(index) {
-    const fetchedControls = (await fetch("http://" + server + "api/controls")).json();
-    const controls = await fetchedControls;
-    const controlId = controls.items[index].id;
-
-    return controlId;
+const APICollection = {
+    DataStream: "datastreams",
+    Control: "controls",
+    System: "systems",
 }
 
-async function fetchSystemId(index) {
-    const fetchedSystems = (await fetch("http://" + server + "api/systems")).json();
-    const systems = await fetchedSystems;
-    const systemId = systems.items[index].id;
+async function fetchId(collectionName, index) {
+    const fetchedCollection = (await fetch("http://" + server + "api/" + collectionName)).json();
+    const collection = await fetchedCollection;
+    const collectionId = collection.items[index].id;
 
-    return systemId;
+    return collectionId;
 }
 
 async function populateIds() {
-    systemId = await fetchSystemId(0);
-    cmdStreamId = await fetchControlId(0);
-    console.info(`Fetched ids! : system ID = ${systemId} and command ID = ${cmdStreamId}`);
+    // systemId = await fetchId(APICollection.System, 0);
+    // cmdStreamId = await fetchId(APICollection.Control, 0);
+    dataStreamId = await fetchId(APICollection.DataStream, 0);
+    console.info(`Fetched ids! : system ID = ${systemId}\ncommand ID = ${cmdStreamId}\ndatastream ID = ${dataStreamId}`);
 }
-
-populateIds();
 
 const systems = new Systems({
     endpointUrl: server + 'api',
@@ -52,6 +53,25 @@ const systems = new Systems({
     }
 });
 
+// get pi camera video using swe api
+const videoOpts = {
+    endpointUrl: server + 'api',
+    resource: '/datastreams/' + "7ls1aubhnkfe4" + '/observations',
+    tls: false,
+    startTime: start,
+    endTime: end,
+    mode: Mode.REPLAY,
+    responseFormat: 'application/swe+binary',
+    prefetchBatchSize: 5000,
+}
+
+const sweVideoDataSource = new SweApiFetch("PiCamera Video", {
+    ...videoOpts
+});
+
+dataSources.push(sweVideoDataSource);
+
+// get pi camera video using sos service
 let videoDataSource = new SosGetResult("PiCamera Video", {
     endpointUrl: server + "sos",
     offeringID: offeringId,
@@ -59,7 +79,6 @@ let videoDataSource = new SosGetResult("PiCamera Video", {
     endTime: end,
     tls: false,
     observedProperty: videoProperty,
-    protocol: 'ws',
     mode: Mode.BATCH,
 });
 
@@ -75,10 +94,34 @@ let videoView = new VideoView({
     container: 'video-window',
     css: 'video-h264',
     name: 'PiCamera Video',
+    framerate: 25,
     showTime: true,
     showStats: true,
     dataSourceId: videoDataSource.id,
     layers: [videoLayer],
+});
+
+// my attempt at putting a marker on leaflet map
+let pointMarkerLayer = new PointMarkerLayer({
+    // location: {
+    //     x: 34.735915156141196,
+    //     z: -86.72325187317927
+    // },
+    location : {
+        x : 1.42376557,
+        y : 43.61758626,
+        z : 100
+    },
+    icon: './images/camera.png',
+    iconSize: [32, 64],
+    name: 'Pi Camera',
+    defaultToTerrainElevation: true,
+});
+
+let leafletMapView = new LeafletView({
+    container: 'leafletmap',
+    layers: [pointMarkerLayer],
+    autoZoomOnFirstMarker: true,
 });
 
 //videoDataSource.connect();
@@ -86,7 +129,7 @@ let videoView = new VideoView({
 // start streaming
 let masterTimeController = new DataSynchronizer({
     startTime: start,
-    intervalRate: 5,
+    endTime: end,
     dataSources: [videoDataSource]
   });
 
@@ -96,6 +139,7 @@ async function submitCommand(angle) {
     // populate ids if not already populated
     if(cmdStreamId === "" || systemId === "") {
         await populateIds();
+        return;
     }
 
     console.info('retrieving system')
@@ -142,3 +186,5 @@ document.getElementById("submitbutton").addEventListener("click", () => submitCo
 document.getElementById("upbutton").addEventListener("click", () => updateAngle(Number.parseInt(15)));
 document.getElementById("downbutton").addEventListener("click", () => updateAngle(Number.parseInt(-15)));
 document.getElementById("angleinput").value = currentAngle;
+
+console.info('end of main')

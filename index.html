@@ -68,6 +68,11 @@
                 display: block;
             }
 
+            div.leafletmap {
+                width: 400px;
+                height: 400px;
+            }
+
         </style>
     </head>
     <body>
@@ -79,16 +84,22 @@
                 </div>
             </div>
             <div id="right">
-                <h2>Control</h2>
-                <label for="angleinput">Angle Input</label>
-                <span>
-                    <input type="number" class="angleinputnumber" id="angleinput" value='0'>
-                    degrees
-                </span>
-                <button id="submitbutton">Set Angle</button>
-                <div class="controlpad">
-                    <button id="upbutton">UP</button>
-                    <button id="downbutton">DOWN</button>
+                <div>
+                    <h2>Control</h2>
+                    <label for="angleinput">Angle Input</label>
+                    <span>
+                        <input type="number" class="angleinputnumber" id="angleinput" value='0'>
+                        degrees
+                    </span>
+                    <button id="submitbutton">Set Angle</button>
+                    <div class="controlpad">
+                        <button id="upbutton">UP</button>
+                        <button id="downbutton">DOWN</button>
+                    </div>
+                </div>
+                <div>
+                    <h2>Location</h2>
+                    <div class="leafletmap" id="leafletmap"></div>
                 </div>
             </div>
             <button></button>
