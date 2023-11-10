@@ -106,6 +106,8 @@ async function submitCommand(angle) {
 
     currentAngle = angle != null ? document.getElementById("angleinput").value : angle;
 
+    currentAngle = parseFloat(currentAngle);
+
     let cmdData = {
         params: {
             Angle: currentAngle,
