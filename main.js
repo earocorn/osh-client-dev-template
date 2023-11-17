@@ -8,7 +8,7 @@ import SweApiFetch from "./osh-js/source/core/datasource/sweapi/SweApi.datasourc
 import PointMarkerLayer from "./osh-js/source/core/ui/layer/PointMarkerLayer.js"
 import LeafletView from "./osh-js/source/core/ui/view/map/LeafletView.js"
 
-let server = "localhost:8181/sensorhub/";
+let server = "192.168.1.219:8181/sensorhub/";
 let start = "2023-11-02T02:47:38.788Z";
 console.log(start);
 let end = "2023-11-22T02:38:44.414558300Z";
