@@ -7,6 +7,7 @@ import Systems from "./osh-js/source/core/sweapi/system/Systems";
 import SweApiFetch from "./osh-js/source/core/datasource/sweapi/SweApi.datasource.js"
 import PointMarkerLayer from "./osh-js/source/core/ui/layer/PointMarkerLayer.js"
 import LeafletView from "./osh-js/source/core/ui/view/map/LeafletView.js"
+import MjpegView from "./osh-js/source/core/ui/view/video/MjpegView.js";
 
 let server = "192.168.1.219:8181/sensorhub/";
 let start = "2023-11-02T02:47:38.788Z";
@@ -38,8 +39,8 @@ async function fetchId(collectionName, index) {
 }
 
 async function populateIds() {
-    // systemId = await fetchId(APICollection.System, 0);
-    // cmdStreamId = await fetchId(APICollection.Control, 0);
+    systemId = await fetchId(APICollection.System, 0);
+    cmdStreamId = await fetchId(APICollection.Control, 0);
     dataStreamId = await fetchId(APICollection.DataStream, 0);
     console.info(`Fetched ids! : system ID = ${systemId}\ncommand ID = ${cmdStreamId}\ndatastream ID = ${dataStreamId}`);
 }
@@ -56,13 +57,14 @@ const systems = new Systems({
 // get pi camera video using swe api
 const videoOpts = {
     endpointUrl: server + 'api',
-    resource: '/datastreams/' + "7ls1aubhnkfe4" + '/observations',
+    resource: '/datastreams/' + "dk581kbe5m6gg" + '/observations',
     tls: false,
-    startTime: start,
+    protocol: 'ws',
+    startTime: 'now',
     endTime: end,
-    mode: Mode.REPLAY,
+    mode: Mode.REAL_TIME,
     responseFormat: 'application/swe+binary',
-    prefetchBatchSize: 5000,
+    //prefetchBatchSize: 5000,
 }
 
 const sweVideoDataSource = new SweApiFetch("PiCamera Video", {
@@ -85,7 +87,7 @@ let videoDataSource = new SosGetResult("PiCamera Video", {
 dataSources.push(videoDataSource);
 
 let videoLayer = new VideoDataLayer({
-    dataSourceId: videoDataSource.id,
+    dataSourceId: sweVideoDataSource.id,
     getFrameData: (rec) => rec.img,
     getTimestamp: (rec) => rec.time,
 }); 
@@ -97,7 +99,7 @@ let videoView = new VideoView({
     framerate: 25,
     showTime: true,
     showStats: true,
-    dataSourceId: videoDataSource.id,
+    dataSourceId: sweVideoDataSource.id,
     layers: [videoLayer],
 });
 
@@ -124,16 +126,16 @@ let leafletMapView = new LeafletView({
     autoZoomOnFirstMarker: true,
 });
 
-//videoDataSource.connect();
+sweVideoDataSource.connect();
 
 // start streaming
 let masterTimeController = new DataSynchronizer({
-    startTime: start,
+    startTime: 'now',
     endTime: end,
-    dataSources: [videoDataSource]
+    dataSources: [sweVideoDataSource]
   });
 
-masterTimeController.connect();
+//masterTimeController.connect();
 
 async function submitCommand(angle) {
     // populate ids if not already populated
