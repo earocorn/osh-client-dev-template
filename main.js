@@ -148,7 +148,7 @@ async function submitCommand(angle) {
     const control = await system.getControlById(cmdStreamId);
     console.info(`control received`);
 
-    currentAngle = angle != null ? document.getElementById("angleinput").value : angle;
+    currentAngle = angle == null ? document.getElementById("angleinput").value : angle;
 
     currentAngle = parseFloat(currentAngle);
 
