@@ -50,9 +50,12 @@ module.exports = {
         rules: [
             {
                 test: /\.(png|svg|jpg|gif)$/,
-                use: [
-                    'file-loader',
-                ],
+                use: {
+                    loader: 'file-loader',
+                    options: {
+                        name: '[name].[ext]'
+                    }
+                },
             },{
                 test: /\.css$/i,
                 use: ['style-loader', 'css-loader'],

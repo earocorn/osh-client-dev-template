@@ -7,7 +7,6 @@ import Systems from "./osh-js/source/core/sweapi/system/Systems";
 import SweApiFetch from "./osh-js/source/core/datasource/sweapi/SweApi.datasource.js"
 import PointMarkerLayer from "./osh-js/source/core/ui/layer/PointMarkerLayer.js"
 import LeafletView from "./osh-js/source/core/ui/view/map/LeafletView.js"
-import MjpegView from "./osh-js/source/core/ui/view/video/MjpegView.js";
 
 let server = "192.168.1.219:8181/sensorhub/";
 let start = "2023-11-02T02:47:38.788Z";
@@ -15,6 +14,7 @@ console.log(start);
 let end = "2023-11-22T02:38:44.414558300Z";
 let offeringId = "urn:osh:sensor:picamera001";
 let videoProperty = "http://sensorml.com/ont/swe/property/VideoFrame";
+let locationProperty = "http://sensorml.com/ont/swe/property/location";
 
 // update with static system id or use function to get system id at index 0
 let systemId = "";
@@ -57,7 +57,7 @@ const systems = new Systems({
 // get pi camera video using swe api
 const videoOpts = {
     endpointUrl: server + 'api',
-    resource: '/datastreams/' + "dk581kbe5m6gg" + '/observations',
+    resource: '/datastreams/' + "u5h3m9fh1rqf2" + '/observations',
     tls: false,
     protocol: 'ws',
     startTime: 'now',
@@ -84,7 +84,7 @@ let videoDataSource = new SosGetResult("PiCamera Video", {
     mode: Mode.BATCH,
 });
 
-dataSources.push(videoDataSource);
+dataSources.push(sweVideoDataSource);
 
 let videoLayer = new VideoDataLayer({
     dataSourceId: sweVideoDataSource.id,
@@ -103,22 +103,39 @@ let videoView = new VideoView({
     layers: [videoLayer],
 });
 
+let gpsDataSource = new SosGetResult("PiCamera Location", {
+    endpointUrl: server + "sos",
+    offeringID: offeringId,
+    startTime: start,
+    endTime: end,
+    mode: Mode.BATCH,
+    tls: false,
+    observedProperty: locationProperty,
+    responseFormat: 'application/json',
+    timeShift: -16000,
+});
+dataSources.push(gpsDataSource);
+
 // my attempt at putting a marker on leaflet map
 let pointMarkerLayer = new PointMarkerLayer({
+    dataSourceId: gpsDataSource.id,
+    getLocation: (rec) => ({
+        x: rec.location.lon,
+        y: rec.location.lat,
+        z: rec.location.alt,
+    }),
     // location: {
     //     x: 34.735915156141196,
     //     z: -86.72325187317927
     // },
-    location : {
-        x : 1.42376557,
-        y : 43.61758626,
-        z : 100
-    },
-    icon: './images/camera.png',
+    icon: 'images/camera.png',
     iconSize: [32, 64],
+    iconAnchor: [16, 65],
     name: 'Pi Camera',
     defaultToTerrainElevation: true,
 });
+
+console.log(`LOCATION: ${gpsDataSource.location}`);
 
 let leafletMapView = new LeafletView({
     container: 'leafletmap',
@@ -126,16 +143,18 @@ let leafletMapView = new LeafletView({
     autoZoomOnFirstMarker: true,
 });
 
-sweVideoDataSource.connect();
+//sweVideoDataSource.connect();
+//gpsDataSource.connect();
 
 // start streaming
 let masterTimeController = new DataSynchronizer({
-    startTime: 'now',
+    replaySpeed: 2,
+    startTime: start,
     endTime: end,
-    dataSources: [sweVideoDataSource]
+    dataSources: dataSources
   });
 
-//masterTimeController.connect();
+masterTimeController.connect();
 
 async function submitCommand(angle) {
     // populate ids if not already populated
