@@ -14,7 +14,7 @@ console.log(start);
 let end = "2023-11-22T02:38:44.414558300Z";
 let offeringId = "urn:osh:sensor:picamera001";
 let videoProperty = "http://sensorml.com/ont/swe/property/VideoFrame";
-let locationProperty = "http://sensorml.com/ont/swe/property/location";
+let locationProperty = "http://sensorml.com/ont/swe/property/Location";
 
 // update with static system id or use function to get system id at index 0
 let systemId = "";
