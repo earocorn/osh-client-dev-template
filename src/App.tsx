@@ -38,8 +38,9 @@ export default function App() {
     const server = `${host}:8181/sensorhub/api`;
 
     let [data, setData] = useState('');
-    const [currentSystem, setCurrentSystem] = useState('');
+    const [currentSystemId, setCurrentSystemId] = useState('');
     const [sensors, setSensors] = useState([]);
+    const [sensorOutput, setSensorOutput] = useState({});
 
     const systems = new Systems({
         endpointUrl: server,
@@ -64,6 +65,12 @@ export default function App() {
             setData(output);
         }
         // setData(JSON.stringify(pageData[0].properties))
+    }
+
+    async function populateSensorData() {
+        if(currentSystemId != '') {
+            const sensorDatastream = await systems.getSystemById()
+        }
     }
 
     async function searchNode() {
@@ -229,7 +236,7 @@ export default function App() {
                 <Dropdown.Menu>
                     {sensors.map((sensor) => {
                         return (
-                        <Dropdown.Item key={sensor.id} onClick={() => setCurrentSystem(sensor.id)}>
+                        <Dropdown.Item key={sensor.id} onClick={() => setCurrentSystemId(sensor.id)}>
                             {sensor.properties.uid}
                         </Dropdown.Item>)
                     })}
@@ -238,8 +245,13 @@ export default function App() {
             <Badge bg={sensors.length == 0 ? 'secondary' : 'success'}>{sensors.length} Found</Badge>
         </InputGroup>
 
-        <ControllerData/>
-        Current System = {currentSystem}
+        <ControllerData 
+        primaryControlStreamIndex={0} 
+        numControlStreams={0} 
+        primaryControllerIndex={0} 
+        numGamepads={0} 
+        gamepads={[]}/>
+        Current System = {currentSystemId}
     </div>
     </>
     );
