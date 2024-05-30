@@ -13,6 +13,7 @@
  *
  */
 
+import './App.css'
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Cartesian3, Ion, SceneMode, Terrain, } from "@cesium/engine";
 import "@cesium/engine/Source/Widget/CesiumWidget.css";
@@ -25,16 +26,20 @@ import SweApi from "osh-js/source/core/datasource/sweapi/SweApi.datasource";
 import VideoDataLayer from "osh-js/source/core/ui/layer/VideoDataLayer";
 import VideoView from "osh-js/source/core/ui/view/video/VideoView";
 import Systems from "osh-js/source/core/sweapi/system/Systems.js";
+import Dropdown from 'react-bootstrap/Dropdown'
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+import InputGroup from 'react-bootstrap/InputGroup';
+import Badge from 'react-bootstrap/Badge';
+import ControllerData from './ControllerData';
 
 export default function App() {
-    // A Cesium Ion access token can be obtained for free from https://ion.cesium.com/.
-    // Do not commit your access token to a public repository.
-    // Ion.defaultAccessToken = '';
-
     const [host, setHost] = useState("localhost");
     const server = `${host}:8181/sensorhub/api`;
 
-    const [data, setData] = useState('');
+    let [data, setData] = useState('');
+    const [currentSystem, setCurrentSystem] = useState('');
+    const [sensors, setSensors] = useState([]);
 
     const systems = new Systems({
         endpointUrl: server,
@@ -51,16 +56,25 @@ export default function App() {
         if(pageData instanceof Array) {
             // Get each system. need to check if system is universalcontroller
             // check if sys.properties.uid = urn:osh:sensor:universalcontroller
-            pageData.map((sys) => console.log("SYSTEM : " + JSON.stringify(sys.properties)))
+            pageData.map((sys) => sensors.push(sys.properties));
+            let output = ""
+            sensors.map((sensor) => {
+                output += JSON.stringify(sensor);
+            });
+            setData(output);
         }
-        setData(JSON.stringify(pageData[0].properties))
+        // setData(JSON.stringify(pageData[0].properties))
+    }
+
+    async function searchNode() {
+        console.log('searching')
+        populateUniversalControllerID();
     }
 
     useEffect(() => {
             (async () => {
-                populateUniversalControllerID();
-                console.log("useEffect: " + JSON.stringify(await (await systems.searchSystems()).page(0)));
-        })()
+
+            })()
     }, [])
 
     // const start = useMemo(() => new Date((Date.now() - 600000)).toISOString(), []);
@@ -192,8 +206,41 @@ export default function App() {
     console.log("system data : " + data)
 
     return (
-        <div id="">
-            data = {data}
-        </div>
+    <>
+    <div>
+        <InputGroup className='d-flex w-50 m-3'>
+            <InputGroup.Text>Remote host</InputGroup.Text>
+            <Form.Control 
+            value={host}
+            onChange={(e) => {setHost(e.target.value)}}
+            />
+            <Button variant="outline-secondary"
+            onClick={() => searchNode()}>
+                Search
+            </Button>
+        </InputGroup>
+
+        <InputGroup className='d-flex w-50 m-3'>
+            <Dropdown>
+                <Dropdown.Toggle variant={sensors.length == 0 ? 'secondary' : 'success'} id="dropdown-basic">
+                    Universal Controller Datasource
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu>
+                    {sensors.map((sensor) => {
+                        return (
+                        <Dropdown.Item key={sensor.id} onClick={() => setCurrentSystem(sensor.id)}>
+                            {sensor.properties.uid}
+                        </Dropdown.Item>)
+                    })}
+                </Dropdown.Menu>
+            </Dropdown>
+            <Badge bg={sensors.length == 0 ? 'secondary' : 'success'}>{sensors.length} Found</Badge>
+        </InputGroup>
+
+        <ControllerData/>
+        Current System = {currentSystem}
+    </div>
+    </>
     );
 };
