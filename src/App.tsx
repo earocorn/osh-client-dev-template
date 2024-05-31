@@ -24,32 +24,45 @@ import PointMarkerLayer from "osh-js/source/core/ui/layer/PointMarkerLayer";
 import PolygonLayer from "osh-js/source/core/ui/layer/PolygonLayer";
 import SweApi from "osh-js/source/core/datasource/sweapi/SweApi.datasource";
 import VideoDataLayer from "osh-js/source/core/ui/layer/VideoDataLayer";
+import DataLayer from "osh-js/source/core/ui/layer/DataLayer";
 import VideoView from "osh-js/source/core/ui/view/video/VideoView";
 import Systems from "osh-js/source/core/sweapi/system/Systems.js";
+import DataStreams from "osh-js/source/core/sweapi/datastream/DataStreams.js"
+import ObservationFilter from "osh-js/source/core/sweapi/observation/ObservationFilter.js"
 import Dropdown from 'react-bootstrap/Dropdown'
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Badge from 'react-bootstrap/Badge';
 import ControllerData from './ControllerData';
+import UniversalControllerOutput, { ComponentRecord, GamepadRecord } from './UniversalControllerOutput';
 
 export default function App() {
+    const start = useMemo(() => new Date((Date.now() - 600000)).toISOString(), []);
+    const end = "2024-12-31T23:59:59Z";
+
     const [host, setHost] = useState("localhost");
     const server = `${host}:8181/sensorhub/api`;
 
     let [data, setData] = useState('');
     const [currentSystemId, setCurrentSystemId] = useState('');
+    const [controllerDatastreamId, setControllerDatastreamId] = useState('');
     const [sensors, setSensors] = useState([]);
-    const [sensorOutput, setSensorOutput] = useState({});
+    const [controllerOutput, setControllerOutput] = useState<UniversalControllerOutput | any>(null);
 
-    const systems = new Systems({
+    let streaming = false;
+
+    const networkProperties = {
         endpointUrl: server,
         tls: false,
         connectorOpts: {
             username: 'admin',
             password: 'admin',
         }
-    });
+    }
+
+    const systems = new Systems(networkProperties);
+    const datastreams = new DataStreams(networkProperties);
 
     async function populateUniversalControllerID() {
         let systemsCollection = await systems.searchSystems();
@@ -57,19 +70,63 @@ export default function App() {
         if(pageData instanceof Array) {
             // Get each system. need to check if system is universalcontroller
             // check if sys.properties.uid = urn:osh:sensor:universalcontroller
-            pageData.map((sys) => sensors.push(sys.properties));
+            let newSensors: any[] = [];
+            pageData.map((sys) => newSensors.push(sys.properties));
+            setSensors(newSensors);
             let output = ""
             sensors.map((sensor) => {
                 output += JSON.stringify(sensor);
             });
             setData(output);
         }
-        // setData(JSON.stringify(pageData[0].properties))
+    }
+
+    async function stopStreaming() {
+        streaming = false;
+        setControllerOutput(null);
     }
 
     async function populateSensorData() {
         if(currentSystemId != '') {
-            const sensorDatastream = await systems.getSystemById()
+            const sensorSystem = await systems.getSystemById(currentSystemId);
+            const sensorDatastreamsCollection = await sensorSystem.searchDataStreams();
+            const sensorDatastreamInfo = await sensorDatastreamsCollection.page(0);
+
+            if(sensorDatastreamInfo instanceof Array) {
+                const dsID = sensorDatastreamInfo[0].properties.id;
+                setControllerDatastreamId(dsID);
+                const sensorDatastream = await datastreams.getDataStreamById(dsID);
+                let sensorObservationsCollection = await sensorDatastream.streamObservations(new ObservationFilter(), 
+                (datablock: any) => {
+                    const result = datablock[0].result;
+                    let gamepads: GamepadRecord[] = [];
+                    if(result.gamepads instanceof Array) {
+                        result.gamepads.map((rec: GamepadRecord) => {
+                            const gamepad: GamepadRecord = {
+                                gamepadName: rec.gamepadName,
+                                isPrimaryController: rec.isPrimaryController,
+                                numComponents: rec.numComponents,
+                                gamepadComponents: rec.gamepadComponents,
+                            };
+                            gamepads.push(gamepad);
+                        })
+                    }
+                    const output: UniversalControllerOutput = {
+                        primaryControlStreamIndex: result.primaryControlStreamIndex,
+                        numControlStreams: result.numControlStreams,
+                        primaryControllerIndex: result.primaryControllerIndex,
+                        numGamepads: result.numGamepads,
+                        gamepads: gamepads,
+                    };
+                    setControllerOutput(output);
+                });
+
+                if(streaming === false) {
+                    sensorObservationsCollection = null;
+                }
+                streaming = true;
+                console.log(controllerOutput)
+            }
         }
     }
 
@@ -80,18 +137,33 @@ export default function App() {
 
     useEffect(() => {
             (async () => {
-
+                populateSensorData();
             })()
-    }, [])
+    }, [currentSystemId])
 
-    // const start = useMemo(() => new Date((Date.now() - 600000)).toISOString(), []);
-    // const end = "2024-12-31T23:59:59Z";
-    // const secure = true;
-    // const locationInfoDsId = "o7pce3e60s0ie";
-    // const attitudeInfoDsId = "mlme3gtdfepvc";
-    // const videoDsId = "h225hesual08g";
-    // const fovDsId = "iabpf1ivua1qm";
+    const controllerDataSource = useMemo(() => new SweApi("Universal Controller", {
+        protocol: "wss",
+        endpointUrl: server,
+        resource: `/datastreams/${controllerDatastreamId}/observations`,
+        startTime: start,
+        endTime: end,
+        mode: Mode.REPLAY, 
+        tls: false,
+    }), [controllerDatastreamId]);
 
+    const controllerDataLayer = useMemo(() => new DataLayer({
+            dataSourceId: [controllerDataSource.getId()],
+        }), [controllerDataSource]);
+
+    const masterTimeController = useMemo(() => new DataSynchronizer({
+        replaySpeed: 1,
+        intervalRate: 5,
+        dataSources: [controllerDataSource]
+    }), [controllerDataSource]);
+
+    // if(controllerDatastreamId != '') {
+    //     masterTimeController.connect();
+    // }
 
     //  * Bounded Draping Layer
     //  * 
@@ -137,11 +209,6 @@ export default function App() {
     //  * 
     //  * @remarks This object will synchronize all the data sources and control the replay speed.
     //  */
-    // const masterTimeController = useMemo(() => new DataSynchronizer({
-    //     replaySpeed: 1,
-    //     intervalRate: 5,
-    //     dataSources: dataSources
-    // }), [dataSources]);
 
     // // Set the marker ID and description for the UAV point marker
     // useEffect(() => {
@@ -210,12 +277,10 @@ export default function App() {
     //     masterTimeController.connect();
     // }, [])
 
-    console.log("system data : " + data)
-
     return (
     <>
     <div>
-        <InputGroup className='d-flex w-50 m-3'>
+        <InputGroup className='d-flex w-50 m-3 pt-3'>
             <InputGroup.Text>Remote host</InputGroup.Text>
             <Form.Control 
             value={host}
@@ -236,7 +301,11 @@ export default function App() {
                 <Dropdown.Menu>
                     {sensors.map((sensor) => {
                         return (
-                        <Dropdown.Item key={sensor.id} onClick={() => setCurrentSystemId(sensor.id)}>
+                        <Dropdown.Item key={sensor.id} onClick={() => {
+                            setCurrentSystemId(sensor.id);
+                            populateSensorData();
+                            console.log(JSON.stringify(sensor.id))
+                            }}>
                             {sensor.properties.uid}
                         </Dropdown.Item>)
                     })}
@@ -245,12 +314,18 @@ export default function App() {
             <Badge bg={sensors.length == 0 ? 'secondary' : 'success'}>{sensors.length} Found</Badge>
         </InputGroup>
 
-        <ControllerData 
-        primaryControlStreamIndex={0} 
-        numControlStreams={0} 
-        primaryControllerIndex={0} 
-        numGamepads={0} 
-        gamepads={[]}/>
+        {controllerOutput != null && (<>
+            <ControllerData 
+            primaryControlStreamIndex={controllerOutput.primaryControlStreamIndex} 
+            numControlStreams={controllerOutput.numControlStreams} 
+            primaryControllerIndex={controllerOutput.primaryControllerIndex} 
+            numGamepads={controllerOutput.numGamepads} 
+            gamepads={controllerOutput.gamepads}/>
+        </>)}
+
+            <Button onClick={() => {stopStreaming()}}>stop streaming</Button>
+        
+        
         Current System = {currentSystemId}
     </div>
     </>

@@ -1,23 +1,17 @@
 import React from "react"
 import Card from 'react-bootstrap/Card';
 import ListGroup from 'react-bootstrap/ListGroup';
-
-interface UniversalControllerOutput {
-    primaryControlStreamIndex: number,
-    numControlStreams: number,
-    primaryControllerIndex: number,
-    numGamepads: number,
-    gamepads: any[],
-}
+import UniversalControllerOutput from "./UniversalControllerOutput";
 
 export default function ControllerData(props: UniversalControllerOutput) {
 
     return (<>
         <Card className="d-flex m-3" style={{ width: '18rem' }}>
             <ListGroup variant="flush">
-                <ListGroup.Item>Cras justo odio</ListGroup.Item>
-                <ListGroup.Item>Dapibus ac facilisis in</ListGroup.Item>
-                <ListGroup.Item>Vestibulum at eros</ListGroup.Item>
+                <ListGroup.Item># of Control Streams : {props.numControlStreams}</ListGroup.Item>
+                <ListGroup.Item>Primary Control Stream : {props.primaryControlStreamIndex}</ListGroup.Item>
+                <ListGroup.Item># of Controllers : {props.numGamepads}</ListGroup.Item>
+                <ListGroup.Item>Primary Controller : {props.primaryControllerIndex}</ListGroup.Item>
             </ListGroup>
         </Card>
     </>)
