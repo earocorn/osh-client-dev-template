@@ -51,13 +51,6 @@ export default function App() {
     const [sensors, setSensors] = useState([]);
     const [controllerOutput, setControllerOutput] = useState<UniversalControllerOutput | any>(null);
 
-<<<<<<< Updated upstream
-    let sensorObservationsCollection = null;
-
-    let streaming = false;
-
-=======
->>>>>>> Stashed changes
     const networkProperties = {
         endpointUrl: server,
         tls: false,
@@ -98,18 +91,11 @@ export default function App() {
             const sensorSystem = await systems.getSystemById(currentSystemId);
             const sensorDatastreamsCollection = await sensorSystem.searchDataStreams();
             const sensorDatastreamInfo = await sensorDatastreamsCollection.page(0);
-
-            sensorObservationsCollection = null;
-
             if(sensorDatastreamInfo instanceof Array) {
                 const dsID = sensorDatastreamInfo[0].properties.id;
                 setControllerDatastreamId(dsID);
                 const sensorDatastream = await datastreams.getDataStreamById(dsID);
-<<<<<<< Updated upstream
-                sensorObservationsCollection = await sensorDatastream.streamObservations(new ObservationFilter(), 
-=======
                 await sensorDatastream.streamObservations(new ObservationFilter(), 
->>>>>>> Stashed changes
                 (datablock: any) => {
                     const result = datablock[0].result;
                     let gamepads: GamepadRecord[] = [];
