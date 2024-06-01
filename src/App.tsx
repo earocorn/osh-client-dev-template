@@ -28,6 +28,7 @@ import DataLayer from "osh-js/source/core/ui/layer/DataLayer";
 import VideoView from "osh-js/source/core/ui/view/video/VideoView";
 import Systems from "osh-js/source/core/sweapi/system/Systems.js";
 import DataStreams from "osh-js/source/core/sweapi/datastream/DataStreams.js"
+import DataStream from "osh-js/source/core/sweapi/datastream/DataStream.js"
 import ObservationFilter from "osh-js/source/core/sweapi/observation/ObservationFilter.js"
 import Dropdown from 'react-bootstrap/Dropdown'
 import Button from 'react-bootstrap/Button';
@@ -44,16 +45,19 @@ export default function App() {
     const [host, setHost] = useState("localhost");
     const server = `${host}:8181/sensorhub/api`;
 
-    let [data, setData] = useState('');
+    let [datastream, setDatastream] = useState([]);
     const [currentSystemId, setCurrentSystemId] = useState('');
     const [controllerDatastreamId, setControllerDatastreamId] = useState('');
     const [sensors, setSensors] = useState([]);
     const [controllerOutput, setControllerOutput] = useState<UniversalControllerOutput | any>(null);
 
+<<<<<<< Updated upstream
     let sensorObservationsCollection = null;
 
     let streaming = false;
 
+=======
+>>>>>>> Stashed changes
     const networkProperties = {
         endpointUrl: server,
         tls: false,
@@ -79,12 +83,13 @@ export default function App() {
             sensors.map((sensor) => {
                 output += JSON.stringify(sensor);
             });
-            setData(output);
         }
     }
 
     async function stopStreaming() {
-        streaming = false;
+        if(datastream !== null && datastream !== undefined) {
+            datastream.map((ds) => ds.stream().disconnect());
+        }
         setControllerOutput(null);
     }
 
@@ -100,7 +105,11 @@ export default function App() {
                 const dsID = sensorDatastreamInfo[0].properties.id;
                 setControllerDatastreamId(dsID);
                 const sensorDatastream = await datastreams.getDataStreamById(dsID);
+<<<<<<< Updated upstream
                 sensorObservationsCollection = await sensorDatastream.streamObservations(new ObservationFilter(), 
+=======
+                await sensorDatastream.streamObservations(new ObservationFilter(), 
+>>>>>>> Stashed changes
                 (datablock: any) => {
                     const result = datablock[0].result;
                     let gamepads: GamepadRecord[] = [];
@@ -122,13 +131,10 @@ export default function App() {
                         numGamepads: result.numGamepads,
                         gamepads: gamepads,
                     };
+
                     setControllerOutput(output);
                 });
-
-                if(streaming === false) {
-                    sensorObservationsCollection = null;
-                }
-                streaming = true;
+                datastream.push(sensorDatastream);
                 console.log(controllerOutput)
             }
         }
@@ -141,7 +147,7 @@ export default function App() {
 
     useEffect(() => {
             (async () => {
-                populateSensorData();
+
             })()
     }, [currentSystemId])
 
@@ -305,7 +311,8 @@ export default function App() {
                 <Dropdown.Menu>
                     {sensors.map((sensor) => {
                         return (
-                        <Dropdown.Item key={sensor.id} onClick={() => {
+                        <Dropdown.Item key={sensor.id} onClick={async () => {
+                            await stopStreaming();
                             setCurrentSystemId(sensor.id);
                             populateSensorData();
                             console.log(JSON.stringify(sensor.id))
