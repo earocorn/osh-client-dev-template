@@ -37,6 +37,7 @@ import InputGroup from 'react-bootstrap/InputGroup';
 import Badge from 'react-bootstrap/Badge';
 import ControllerData from './ControllerData';
 import UniversalControllerOutput, { ComponentRecord, GamepadRecord } from './UniversalControllerOutput';
+import PTZCop from './components/PTZCop';
 
 export default function App() {
     const start = useMemo(() => new Date((Date.now() - 600000)).toISOString(), []);
@@ -325,6 +326,7 @@ export default function App() {
         
         Current System = {currentSystemId}
     </div>
+    <PTZCop/>
     </>
     );
 };
