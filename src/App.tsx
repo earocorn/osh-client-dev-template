@@ -9,6 +9,7 @@ import VideoDataLayer from 'osh-js/source/core/ui/layer/VideoDataLayer';
 import SweApi from "osh-js/source/core/datasource/sweapi/SweApi.datasource"
 import {Mode} from 'osh-js/source/core/datasource/Mode';
 import "./App.css";
+import MapComponent from './MapComponent';
 
 function App() {
 
@@ -95,9 +96,10 @@ function App() {
   return (
     <div className="App">
       <h1>Lane: </h1>
-      <div style={{ padding: 50 }}>
+      {/* <div style={{ padding: 50 }}>
           <div id="video-container" style={{ width: "100%", height: "100%" }}/>
-      </div>
+      </div> */}
+      <MapComponent/>
     </div>
   );
 }
