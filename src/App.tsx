@@ -44,29 +44,22 @@ function App() {
 
   useEffect(() => {
     async function fetchData() {
-      // Lane system
-      const sys = await systems.getSystemById("haso9uhmu6imu");
-      console.log(sys);
-
-      ds = await datastreams.getDataStreamById("mkin73ik1q45m");
+      //8m1cof6p2fcso
+      //q5nuf1f2tmj0s
+      ds = await datastreams.getDataStreamById("fj6kdcao2hikc");
 
       videoSource = new ConSysApi('video', {
         protocol: ds.networkProperties.streamProtocol,
         endpointUrl: ds.networkProperties.endpointUrl,
         resource: `/datastreams/${ds.properties.id}/observations`,
         tls: false,
-        startTime: "2025-04-23T16:51:53Z",
-        endTime: "2025-04-23T17:54:32Z",
+        // startTime: "2025-04-23T16:51:53Z",
+        // endTime: "2025-05-24T17:54:32Z",
         responseFormat: "application/swe+binary",
-        mode: Mode.REPLAY,
+        mode: Mode.REAL_TIME,
       });
 
       console.log(ds);
-
-      // weatherDs.streamObservations(undefined, (obs: any) => {
-      //   setWeatherObs(obs[0].result);
-      //   // console.log(obs[0].result);
-      // });
 
       videoLayer = new VideoDataLayer({
         dataSourceId: videoSource.id,
@@ -109,47 +102,49 @@ function App() {
     console.log(videoLayer.getCurrentProps())
   }
   async function setFrame() {
-
-    const sys = await systems.getSystemById("haso9uhmu6imu");
-
-    const ds = await datastreams.getDataStreamById("mkin73ik1q45m");
-
-    const obs = await ds.searchObservations(new ObservationFilter({
-      format: 'application/swe+binary',
-      phenomenonTime: `${/*startTime+500ms*/}/${/*endTime-500ms*/}`
-    }), 1);
-
-    const obsPage = await obs.nextPage();
-
-    let imgBlob = new Blob([obsPage[3].img.data]);
-    let url = window.URL.createObjectURL(imgBlob);
-
-    var imgTag = document.getElementById("test");
-    let oldBlobURL = imgTag.src;
-    imgTag.src = url;
+    //
+    // const sys = await systems.getSystemById("haso9uhmu6imu");
+    //
+    // const ds = await datastreams.getDataStreamById("mkin73ik1q45m");
+    //
+    // const obs = await ds.searchObservations(new ObservationFilter({
+    //   format: 'application/swe+binary',
+    //   phenomenonTime: `${/*startTime+500ms*/}/${/*endTime-500ms*/}`
+    // }), 1);
+    //
+    // const obsPage = await obs.nextPage();
+    //
+    // let imgBlob = new Blob([obsPage[3].img.data]);
+    // let url = window.URL.createObjectURL(imgBlob);
+    //
+    // var imgTag = document.getElementById("test");
+    // let oldBlobURL = imgTag.src;
+    // imgTag.src = url;
   }
 
   let frameSrc = "";
 
   function pause() {
-    console.log(masterTimeController)
-    masterTimeController.disconnect();
-    console.log(masterTimeController)
-    var img = document.getElementsByClassName("video-mjpeg");
-    frameSrc = (img[0].src);
+    // console.log(masterTimeController)
+    // masterTimeController.disconnect();
+    // console.log(masterTimeController)
+    // var img = document.getElementsByClassName("video-mjpeg");
+    // frameSrc = (img[0].src);
+    videoSource.disconnect();
   }
 
   function play() {
-    console.log(masterTimeController);
-    var img = document.getElementsByClassName("video-mjpeg");
-
-    masterTimeController.connect().finally(() => {
-      if(img.length > 0) {
-        console.log("Setting src to ", img[0].src);
-        img[0].src = frameSrc;
-        console.log(frameSrc);
-      }
-    });
+    // console.log(masterTimeController);
+    // var img = document.getElementsByClassName("video-mjpeg");
+    //
+    // masterTimeController.connect().finally(() => {
+    //   if(img.length > 0) {
+    //     console.log("Setting src to ", img[0].src);
+    //     img[0].src = frameSrc;
+    //     console.log(frameSrc);
+    //   }
+    // });
+    videoSource.connect();
   }
 
   return (
